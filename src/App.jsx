@@ -67,6 +67,32 @@ const css = `
     to { transform: rotate(360deg); }
   }
 
+  .pin-input {
+    background: transparent !important;
+    border: 1px solid rgba(244, 196, 48, 0.3) !important;
+    color: white !important;
+    text-align: center;
+    font-size: 32px;
+    letter-spacing: 0.6em;
+    font-weight: 800;
+    border-radius: 20px;
+    padding: 24px;
+    outline: none;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .pin-input:focus {
+    border-color: ${S.gold} !important;
+    box-shadow: 0 0 25px rgba(244, 196, 48, 0.15);
+    background: rgba(244, 196, 48, 0.03) !important;
+  }
+  .pin-input::placeholder {
+    letter-spacing: normal;
+    font-size: 16px;
+    font-weight: 500;
+    opacity: 0.3;
+  }
+
   .view-transition { animation: fadeScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .tab-transition { animation: slideLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .floating { animation: float 8s ease-in-out infinite; will-change: transform; }
@@ -500,18 +526,26 @@ export default function FarewellApp() {
     setLoaded(true);
   };
 
-  const handleAdminLogin = useCallback(async () => {
-    const admin = admins.find(a => a.pin === pinInput && a.is_active);
+  const handleAdminLogin = useCallback(async (manualPin) => {
+    const pinToVerify = manualPin || pinInput;
+    const admin = admins.find(a => a.pin === pinToVerify && a.is_active);
     if (admin) {
       setCurrentAdmin(admin);
       setPinInput("");
       setPinError(false);
       setView(admin.role === "master" ? "masterAdmin" : "subAdmin");
-    } else {
+    } else if (pinToVerify.length >= 5) {
       setPinError(true);
+      setPinInput("");
       setTimeout(() => setPinError(false), 500);
     }
   }, [admins, pinInput]);
+
+  useEffect(() => {
+    if (pinInput.length === 5) {
+      handleAdminLogin(pinInput);
+    }
+  }, [pinInput, handleAdminLogin]);
 
   const handleCheckEligibility = useCallback(async () => {
     if (!form.name || !form.rollNo) { alert("Please complete your details"); return; }
@@ -692,13 +726,28 @@ export default function FarewellApp() {
         <div key="login" className="view-transition" style={{minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:24}}>
           <div className={`glass-card ${pinError ? 'shake' : ''}`} style={{padding:"60px 40px", maxWidth:480, width:"100%", textAlign:"center"}}>
             <BorderBeam />
-            <div style={{marginBottom:32}}><Icon.Vault/></div>
-            <h2 className="premium-text" style={{fontSize:32, fontFamily:"'Playfair Display', serif", marginBottom:48, letterSpacing:"0.05em"}}>Security Clearance</h2>
-            <div style={{marginBottom:48}}>
-              <input type="password" placeholder="••••" value={pinInput} onChange={onPinChange} style={{textAlign:"center", fontSize:32, letterSpacing:"0.6em", fontWeight:800, background:"rgba(0,0,0,0.4)"}}/>
+            <div style={{marginBottom:32}} className="floating"><Icon.Vault/></div>
+            <h2 className="premium-text" style={{fontSize:32, fontFamily:"'Playfair Display', serif", marginBottom:12, letterSpacing:"0.05em"}}>Security Clearance</h2>
+            <p style={{color:S.textDim, fontSize:12, fontWeight:800, letterSpacing:"0.2em", marginBottom:48}}>ACCESSING ENCRYPTED TERMINAL</p>
+            
+            <div style={{marginBottom:48, position:"relative"}}>
+              <input 
+                type="password" 
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={5}
+                placeholder="Enter Admin PIN" 
+                className="pin-input"
+                value={pinInput} 
+                onChange={onPinChange}
+                autoFocus
+              />
             </div>
-            <button className="shine-btn" onClick={handleAdminLogin}>Initialize System</button>
-            <button onClick={()=>setView("form")} style={{background:"none", border:"none", color:S.textDim, marginTop:40, fontSize:12, fontWeight:800, cursor:"pointer", letterSpacing:"0.15em"}}>ABORT REQUEST</button>
+
+            <button onClick={()=>setView("form")} style={{background:"none", border:"none", color:S.textDim, marginTop:12, fontSize:11, fontWeight:900, cursor:"pointer", letterSpacing:"0.15em", transition:"color 0.3s"}}>
+              <span style={{opacity:0.5}}>— OR —</span><br/><br/>
+              ABORT SECURITY REQUEST
+            </button>
           </div>
         </div>
       )}
