@@ -501,10 +501,13 @@ export default function FarewellApp() {
     const rInput = search.toUpperCase();
     return students
       .filter(s => {
-        const matchesSearch = s.name.toLowerCase().includes(sInput) || s.roll_no.toUpperCase().includes(rInput);
-        const matchesProgram = filters.program === "All" || s.program === filters.program;
-        const matchesYear = filters.year === "All" || s.year === parseInt(filters.year);
-        const matchesSection = filters.section === "All" || s.section === filters.section;
+        const matchesSearch = (s.name || "").toLowerCase().includes(sInput) || (s.roll_no || "").toUpperCase().includes(rInput);
+        const matchesProgram = filters.program === "All" || 
+          (s.program && s.program.toString().trim().toLowerCase() === filters.program.toLowerCase());
+        const matchesYear = filters.year === "All" || 
+          (s.year !== undefined && s.year !== null && s.year.toString() === filters.year.toString());
+        const matchesSection = filters.section === "All" || 
+          (s.section && s.section.toString().trim().toLowerCase() === filters.section.toLowerCase());
         return matchesSearch && matchesProgram && matchesYear && matchesSection;
       })
       .sort((a, b) => {
